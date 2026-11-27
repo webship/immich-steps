@@ -1,0 +1,64 @@
+{
+  "name": "@webship-js/immich-steps",
+  "version": "2.0.0",
+  "description": "Cucumber step definitions for Immich, the self-hosted photo and video library, for webship-js: signing in through the form or the API (a session, a token or an API key), uploads waited on until the library holds them, the timeline and the photo viewer by the date a photo was taken, favorites, the trash with its Undo, albums, shared links opened signed out, search by file name, and the library's messages and confirmations read by their text. The test content is removed after each scenario and the counts checked. No step phrase names the product.",
+  "main": "tests/step-definitions/immich-helpers.js",
+  "files": [
+    "tests/step-definitions/",
+    "tests/features/",
+    "tests/fixtures/",
+    "assets/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "cucumber-js --config cucumber.js",
+    "test:dry": "cucumber-js --config cucumber.js --dry-run",
+    "test:examples": "node tests/check-examples.js",
+    "test:paths": "node tests/check-paths.js",
+    "test:must-fail": "node tests/check-must-fail.js",
+    "test:chromium": "BROWSER=chromium cucumber-js --config cucumber.js",
+    "test:firefox": "BROWSER=firefox cucumber-js --config cucumber.js",
+    "test:webkit": "BROWSER=webkit cucumber-js --config cucumber.js",
+    "test:headed": "HEADLESS=false cucumber-js --config cucumber.js",
+    "generate-reports": "generate-reports",
+    "test:fast": "SLOW_MO=0 cucumber-js --config cucumber.js",
+    "demo:build": "bash .github/scripts/build-demo.sh",
+    "demo:remove": "bash .github/scripts/remove-demo.sh"
+  },
+  "keywords": [
+    "webship-js",
+    "cucumber",
+    "playwright",
+    "bdd",
+    "immich",
+    "photos",
+    "step-definitions"
+  ],
+  "author": "Webship.co",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/webship/immich-steps.git"
+  },
+  "bugs": {
+    "url": "https://github.com/webship/immich-steps/issues"
+  },
+  "homepage": "https://github.com/webship/immich-steps#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">= 24.0"
+  },
+  "peerDependencies": {
+    "webship-js": "^2.0.19"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.0",
+    "webship-js": "^2.0.19"
+  },
+  "overrides": {
+    "@cucumber/cucumber": "^12"
+  }
+}
