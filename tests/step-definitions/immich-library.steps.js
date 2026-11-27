@@ -35,7 +35,7 @@ async function uploaded(page, file, answer) {
 
 /**
  * Upload a file through the page's Upload button and its file chooser, as a person does; the step waits until the
- * library has taken it. The file is from the project's fixtures folder (worldParameters.immich.fixtures), else from
+ * library has taken it and finished with it (its details read, its thumbnail made). The file is from the project's fixtures folder (worldParameters.immich.fixtures), else from
  * the pack's own: webship-test-red.jpg (taken on May 1, 2024), webship-test-blue.jpg (August 15, 2023),
  * webship-test-green.jpg (December 24, 2022).
  *
@@ -62,7 +62,8 @@ When(/^(?:I|we) upload "([^"]+)" to the library$/, async function (file) {
     await button.click();
     await (await chooser).setFiles(filePath);
   }, h.WAIT.upload);
-  await uploaded(page, file, answer);
+  const asset = await uploaded(page, file, answer);
+  await h.processed(this, asset.id, { session: true });
 });
 
 /**
@@ -105,6 +106,7 @@ When(/^(?:I|we) upload "([^"]+)" to the library through the API$/, async functio
   if (answer.status() !== 201) {
     throw friendly({ message: `Expected the library to take "${file}" through the API, but it answered ${answer.status()}: ${body.message || JSON.stringify(body).slice(0, 200)}.`, hint: answer.status() === 401 ? 'Sign the API in first: Given I am signed in to the library\'s API as "user".' : 'Check that the account (or its key) may upload.' });
   }
+  await h.processed(this, body.id, headers['x-api-key'] ? { key: headers['x-api-key'] } : { token: String(headers.Authorization || '').replace(/^Bearer /, '') });
 });
 
 /** The assets of the signed-in API whose original file name is the file's. */

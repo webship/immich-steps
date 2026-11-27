@@ -28,6 +28,7 @@ const { friendly, failure, sendRequest } = webship;
 const WAIT = {
   page: 20000,      // a page of the library to draw itself
   upload: 30000,    // an upload to be answered
+  process: 60000,   // the library's jobs to finish with an upload (its details read, its thumbnail made)
   photo: 15000,     // a photo to show in the timeline, an album, a search, the trash or a shared page
   message: 10000,   // a message (a toast, a form's error) to show
   dialog: 10000,    // a dialog to ask, and to close once answered
@@ -262,7 +263,7 @@ async function messagesShown(page) {
     return await page.evaluate(() => {
       const out = [];
       for (const el of document.body.children) {
-        if (el.tagName !== 'DIV' || el.querySelector('main, nav, header')) continue;
+        if (el.tagName !== 'DIV' || el.querySelector('main, nav, header, form, input, textarea, select')) continue;
         const text = (el.innerText || '').trim();
         if (text && text.length < 400 && el.offsetParent !== null) out.push(text.replace(/\s*\n+\s*/g, ' · '));
       }
@@ -320,6 +321,26 @@ async function open(world, p) {
   const page = world.page;
   await page.goto(absolute(world, p), { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle', { timeout: WAIT.page }).catch(() => {});
+}
+
+/**
+ * Wait until the library has finished with an upload: it reads a file's details (the date it was taken, from its
+ * EXIF) and makes its thumbnail in jobs of its own, after it has answered the upload. Until then the photo is named by
+ * the day it was uploaded, or not drawn at all. `options` sign the requests as `request` does.
+ */
+async function processed(world, id, options) {
+  const deadline = Date.now() + WAIT.process;
+  let last;
+  while (Date.now() < deadline) {
+    last = await request(world, 'GET', `/api/assets/${id}`, options);
+    const asset = (last && last.data) || {};
+    if (last.status === 200 && asset.exifInfo && asset.thumbhash) return asset;
+    await pause(500);
+  }
+  throw friendly({
+    message: `The library took the upload (asset ${id}), but did not finish with it within ${WAIT.process / 1000} s: ${last && last.status === 200 ? 'its details or its thumbnail are not there yet' : `it answered ${last ? last.status : 'nothing'}`}.`,
+    hint: 'The library works its uploads in jobs: check its Job Queues (Administration) and its log.',
+  });
 }
 
 /** Pause; only to let a page settle between two polls, never as a wait for something. */
@@ -393,7 +414,7 @@ async function removeTestContent(world, handle) {
 module.exports = {
   WAIT, TAKEN_ON, TEST_FILE, TEST_NAME, TEST_ACCOUNT,
   settings, base, absolute, user, request, said, signIn, tokenOf, signApi, apiAuth,
-  fixture, mimeOf, photo, photosShown, photoShows, messagesShown, messageShown, dialog, callOf, open, pause,
+  fixture, mimeOf, photo, photosShown, photoShows, messagesShown, messageShown, dialog, callOf, open, processed, pause,
   assetsOf, counts, removeTestContent,
   friendly, failure,
 };
