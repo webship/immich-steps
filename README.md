@@ -106,7 +106,9 @@ users: {
 `admin` is the library's first admin. It is the managing account, which makes and removes the test accounts.
 
 An account meets Immich's first-run wizard on its first sign-in (theme, language, privacy, storage, backups, the
-mobile app). The Webship Workspace's accounts have met it already. A library's own account may not have: `When I get
+mobile app). Immich keeps two flags for it: the account's own (`PUT /api/users/me/onboarding`) and, for an admin, the
+library's own setup (`POST /api/system-metadata/admin-onboarding`). An admin meets the wizard until both are set. The
+Webship Workspace's accounts have met it already, and so have the demo's. A library's own account may not have: `When I get
 past the library's first-run wizard` gets it to its timeline. A scenario that needs an account of its own makes one
 with `Given the library has a new account "newcomer"`.
 

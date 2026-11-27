@@ -38,5 +38,9 @@ echo "Both accounts are past the first-run wizard."
 curl -fsS "${U}/api/system-config" -H "Authorization: Bearer ${A}" | python3 -c 'import json, sys; c = json.load(sys.stdin); c["newVersionCheck"]["enabled"] = False; print(json.dumps(c))' > "${APP}/config.json"
 curl -fsS -o /dev/null -X PUT "${U}/api/system-config" -H "Authorization: Bearer ${A}" -H 'Content-Type: application/json' --data @"${APP}/config.json"
 rm -f "${APP}/config.json"
+# The library's own first-run setup, which only an admin meets: a flag of its own beside each account's (the
+# isOnboarded of /api/server/config). Until it is set, the admin's sign-in lands on /auth/onboarding.
+curl -fsS -o /dev/null -X POST "${U}/api/system-metadata/admin-onboarding" -H "Authorization: Bearer ${A}" -H 'Content-Type: application/json' --data '{"isOnboarded":true}'
+echo "The library's own first-run setup is marked done."
 curl -fsS -o /dev/null -X POST "${U}/api/auth/logout" -H "Authorization: Bearer ${A}"
 echo "The version check is off. The demo is ready at ${U}."

@@ -7,6 +7,11 @@ Feature: Signing in to the library
     When I sign in to the library as "user"
     Then I should see "Click to upload your first photo"
 
+  # An admin meets the library's own first-run setup too, until it is marked done (the demo's build script does).
+  Scenario: The library's admin signs in through the form, and its timeline opens
+    When I sign in to the library as "admin"
+    Then I should see "Click to upload your first photo"
+
   # The browser logs the refused sign-in (a 401) as a console error: the refusal is what the scenario checks.
   @js-warn
   Scenario: A wrong password is refused, and the form says so
