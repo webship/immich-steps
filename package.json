@@ -1,6 +1,6 @@
 {
   "name": "@webship-js/immich-steps",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Cucumber step definitions for Immich, the self-hosted photo and video library, for webship-js: signing in through the form or the API (a session, a token or an API key), uploads waited on until the library holds them, the timeline and the photo viewer by the date a photo was taken, favorites, the trash with its Undo, albums, shared links opened signed out, search by file name, and the library's messages and confirmations read by their text. The test content is removed after each scenario and the counts checked. No step phrase names the product.",
   "main": "tests/step-definitions/immich-helpers.js",
   "files": [
