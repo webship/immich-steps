@@ -22,7 +22,7 @@ const path = require('path');
 const webship = require('webship-js/tests/step-definitions/webship');
 const api = require('webship-js/tests/step-definitions/api.steps');
 
-const { friendly, failure, sendRequest } = webship;
+const { friendly, failure, sendRequest, onNewPage } = webship;
 
 // The budgets of the waits (milliseconds): each is a ceiling, not a pause.
 const WAIT = {
@@ -37,6 +37,27 @@ const WAIT = {
 
 // The text of a photo's image, as the library writes it: "Image taken on May 1, 2024".
 const TAKEN_ON = 'Image taken on ';
+
+// What the pages of a scenario make in the library, by the answers of the library's API: every album and shared link
+// the page asks for, so @removes-test-content removes each of them, named or not (a slow page can leave an album it
+// made untitled).
+if (typeof onNewPage === 'function') {
+  onNewPage(async (world, page) => {
+    page.on('response', (response) => {
+      try {
+        const request = response.request();
+        if (request.method() !== 'POST' || response.status() !== 201) return;
+        const where = new URL(response.url()).pathname;
+        if (where !== '/api/albums' && where !== '/api/shared-links') return;
+        response.json().then((body) => {
+          if (!body || !body.id) return;
+          if (!world.immichMade) world.immichMade = [];
+          world.immichMade.push({ path: where, id: body.id });
+        }).catch(() => {});
+      } catch (e) { /* a page that closed meanwhile */ }
+    });
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Settings, addresses and accounts
@@ -385,6 +406,17 @@ async function counts(world, handle) {
   return out;
 }
 
+/** Remove what the scenario's pages made (albums, shared links), by their ids, through the browser's session. */
+async function removeMade(world) {
+  const removed = [];
+  for (const made of (world.immichMade || []).reverse()) {
+    const answer = await request(world, 'DELETE', `${made.path}/${made.id}`, { session: true }).catch(() => null);
+    if (answer && answer.status < 300) removed.push(`${made.path === '/api/albums' ? 'album' : 'shared link'} ${made.id}`);
+  }
+  world.immichMade = [];
+  return removed;
+}
+
 /** Remove what a scenario made for an account: its webship-test-* files (for good) and its "Webship test …" things. */
 async function removeTestContent(world, handle) {
   const token = await tokenOf(world, handle);
@@ -394,11 +426,12 @@ async function removeTestContent(world, handle) {
     await request(world, 'DELETE', '/api/assets', { token, json: { ids: assets.map((a) => a.id), force: true } });
     removed.push(`${assets.length} file(s)`);
   }
-  for (const [p, field, label] of [['/api/albums', 'albumName', 'album'], ['/api/shared-links', 'description', 'shared link'], ['/api/api-keys', 'name', 'API key']]) {
+  // A shared link before the album it shares, so neither waits on the other.
+  for (const [p, field, label] of [['/api/shared-links', 'description', 'shared link'], ['/api/albums', 'albumName', 'album'], ['/api/api-keys', 'name', 'API key']]) {
     const answer = await request(world, 'GET', p, { token });
     for (const item of (Array.isArray(answer.data) ? answer.data : []).filter((x) => TEST_NAME.test(x[field] || ''))) {
-      await request(world, 'DELETE', `${p}/${item.id}`, { token });
-      removed.push(`${label} "${item[field]}"`);
+      const gone = await request(world, 'DELETE', `${p}/${item.id}`, { token });
+      removed.push(gone.status < 300 ? `${label} "${item[field]}"` : `${label} "${item[field]}" (not removed: ${gone.status} ${said(gone)})`);
     }
   }
   if (handle === settings(world).manager) {
@@ -415,6 +448,6 @@ module.exports = {
   WAIT, TAKEN_ON, TEST_FILE, TEST_NAME, TEST_ACCOUNT,
   settings, base, absolute, user, request, said, signIn, tokenOf, signApi, apiAuth,
   fixture, mimeOf, photo, photosShown, photoShows, messagesShown, messageShown, dialog, callOf, open, processed, pause,
-  assetsOf, counts, removeTestContent,
+  assetsOf, counts, removeMade, removeTestContent,
   friendly, failure,
 };

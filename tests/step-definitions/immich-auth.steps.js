@@ -266,7 +266,7 @@ After({ tags: '@removes-test-content' }, async function (scenario) {
   // console error: after a scenario that passed, the page leaves first. A failed one keeps its page, for the
   // screenshot of the failure.
   if (scenario.result && scenario.result.status === 'PASSED' && this.page) await this.page.goto('about:blank').catch(() => {});
-  const removed = [];
+  const removed = await h.removeMade(this);
   for (const handle of Object.keys(this.immichCounts)) {
     removed.push(...(await h.removeTestContent(this, handle)).map((r) => `${handle}: ${r}`));
   }
